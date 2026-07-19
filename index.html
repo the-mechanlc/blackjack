@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blackjack Table</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+  <main class="table" aria-label="Blackjack table">
+    <section class="table-felt">
+      <div class="table-rail rail-top"></div>
+      <div class="table-rail rail-bottom"></div>
+
+      <header class="table-header">
+        <div>
+          <p class="eyebrow">Single deck casino blackjack</p>
+          <h1>Blackjack</h1>
+        </div>
+        <div class="bankroll" aria-live="polite">
+          <span>Bankroll</span>
+          <strong id="bankroll">$500</strong>
+        </div>
+      </header>
+
+      <section class="dealer-zone hand-zone" aria-labelledby="dealer-label">
+        <div class="zone-label">
+          <span id="dealer-label">Dealer</span>
+          <strong id="dealer-total">?</strong>
+        </div>
+        <div id="dealer-cards" class="card-row" aria-label="Dealer cards"></div>
+      </section>
+
+      <div class="table-markings" aria-hidden="true">
+        <div class="arc-text">BLACKJACK PAYS 3 TO 2</div>
+        <div class="bet-circle">
+          <span id="bet-amount">$25</span>
+        </div>
+      </div>
+
+      <section class="player-zone hand-zone" aria-labelledby="player-label">
+        <div class="zone-label">
+          <span id="player-label">Player</span>
+          <strong id="player-total">0</strong>
+        </div>
+        <div id="player-cards" class="card-row" aria-label="Player cards"></div>
+      </section>
+    </section>
+
+    <aside class="side-panel" aria-label="Game controls and probabilities">
+      <section class="panel-section status-section">
+        <p class="eyebrow">Round</p>
+        <h2 id="round-title">Place your bet</h2>
+        <p id="round-message">Choose a chip size, then deal into the shoe.</p>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-heading">
+          <h2>Bet</h2>
+          <span id="shoe-count">52 cards</span>
+        </div>
+        <div class="chips" role="group" aria-label="Bet amount">
+          <button class="chip" type="button" data-bet="10">$10</button>
+          <button class="chip is-selected" type="button" data-bet="25">$25</button>
+          <button class="chip" type="button" data-bet="50">$50</button>
+          <button class="chip" type="button" data-bet="100">$100</button>
+        </div>
+      </section>
+
+      <section class="panel-section controls" aria-label="Actions">
+        <button id="deal-button" class="primary-action" type="button">Deal</button>
+        <button id="hit-button" type="button" disabled>Hit</button>
+        <button id="stand-button" type="button" disabled>Stand</button>
+        <button id="double-button" type="button" disabled>Double</button>
+      </section>
+
+      <section class="panel-section probability-panel" aria-labelledby="odds-heading">
+        <div class="section-heading">
+          <h2 id="odds-heading">Win Probability</h2>
+          <span id="recommended-action">Deal first</span>
+        </div>
+        <div class="probability-meter" aria-label="Current win probability">
+          <div id="probability-fill"></div>
+        </div>
+        <div class="probability-values">
+          <span>Stand: <strong id="stand-odds">--</strong></span>
+          <span>Hit: <strong id="hit-odds">--</strong></span>
+        </div>
+        <p id="probability-reason">Odds update after the first cards are dealt.</p>
+      </section>
+
+      <section class="panel-section rules">
+        <h2>Table Rules</h2>
+        <ul>
+          <li>Dealer stands on all 17s.</li>
+          <li>Blackjack pays 3:2.</li>
+          <li>Double is available on the first two cards.</li>
+        </ul>
+      </section>
+    </aside>
+</main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

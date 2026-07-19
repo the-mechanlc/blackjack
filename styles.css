@@ -1,0 +1,466 @@
+:root {
+  color-scheme: dark;
+  --felt: #0e6f4f;
+  --felt-dark: #074735;
+  --felt-light: #168961;
+  --rail: #5b2128;
+  --rail-dark: #2b1218;
+  --gold: #e1b85a;
+  --cream: #f6efe0;
+  --ink: #1a1412;
+  --panel: #17191e;
+  --panel-soft: #22252c;
+  --line: rgba(246, 239, 224, 0.24);
+  --muted: #b9c2bd;
+  --good: #5fd38d;
+  --warn: #f0c15d;
+  --bad: #ef786f;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(225, 184, 90, 0.14), transparent 28rem),
+    linear-gradient(135deg, #101318, #21151a 52%, #0d1514);
+  color: var(--cream);
+}
+
+button {
+  min-height: 44px;
+  border: 1px solid rgba(246, 239, 224, 0.28);
+  border-radius: 8px;
+  background: rgba(246, 239, 224, 0.09);
+  color: var(--cream);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(225, 184, 90, 0.75);
+  background: rgba(225, 184, 90, 0.16);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.app-shell {
+  width: min(1380px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.table {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 22px;
+  align-items: stretch;
+}
+
+.table-felt {
+  position: relative;
+  min-height: 760px;
+  overflow: hidden;
+  border: 14px solid var(--rail-dark);
+  border-radius: 0 0 360px 360px / 0 0 220px 220px;
+  background:
+    radial-gradient(ellipse at 50% 108%, rgba(246, 239, 224, 0.12), transparent 44%),
+    radial-gradient(circle at 50% 45%, rgba(22, 137, 97, 0.88), transparent 34rem),
+    repeating-radial-gradient(circle at 50% 46%, rgba(246, 239, 224, 0.035) 0 2px, transparent 2px 9px),
+    linear-gradient(150deg, var(--felt), var(--felt-dark));
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+}
+
+.table-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 54px;
+  background: linear-gradient(90deg, var(--rail-dark), var(--rail), var(--rail-dark));
+  box-shadow: inset 0 0 26px rgba(0, 0, 0, 0.38);
+}
+
+.rail-top {
+  top: 0;
+}
+
+.rail-bottom {
+  bottom: 0;
+  height: 82px;
+}
+
+.table-header,
+.dealer-zone,
+.player-zone,
+.table-markings {
+  position: relative;
+  z-index: 1;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 82px 7% 18px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+h1 {
+  font-size: clamp(2.25rem, 6vw, 5.25rem);
+  text-transform: uppercase;
+}
+
+h2 {
+  font-size: 1.08rem;
+}
+
+.bankroll {
+  align-self: start;
+  min-width: 128px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(10, 20, 18, 0.58);
+  text-align: right;
+}
+
+.bankroll span,
+.section-heading span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.bankroll strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--gold);
+  font-size: 1.35rem;
+}
+
+.hand-zone {
+  width: min(650px, 86%);
+  margin: 0 auto;
+}
+
+.dealer-zone {
+  min-height: 170px;
+}
+
+.player-zone {
+  min-height: 210px;
+  margin-top: 26px;
+}
+
+.zone-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  color: rgba(246, 239, 224, 0.88);
+  font-weight: 800;
+}
+
+.zone-label strong {
+  min-width: 58px;
+  color: var(--gold);
+  text-align: right;
+}
+
+.card-row {
+  display: flex;
+  min-height: 126px;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.playing-card {
+  width: 86px;
+  height: 124px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 9px;
+  border: 1px solid rgba(26, 20, 18, 0.22);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), transparent 42%),
+    var(--cream);
+  color: var(--ink);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
+}
+
+.playing-card.red {
+  color: #a7282c;
+}
+
+.playing-card.hidden {
+  place-items: center;
+  background:
+    radial-gradient(circle, rgba(225, 184, 90, 0.34) 0 3px, transparent 3px 9px),
+    linear-gradient(135deg, #7e2331, #2b1218);
+  color: var(--gold);
+}
+
+.rank-top,
+.rank-bottom {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 900;
+}
+
+.rank-bottom {
+  align-self: end;
+  transform: rotate(180deg);
+}
+
+.suit-center {
+  align-self: center;
+  justify-self: center;
+  font-size: 2.65rem;
+}
+
+.table-markings {
+  display: grid;
+  place-items: center;
+  min-height: 188px;
+}
+
+.arc-text {
+  width: min(520px, 82%);
+  padding: 16px 20px;
+  border-top: 2px solid rgba(225, 184, 90, 0.7);
+  border-radius: 50%;
+  color: rgba(246, 239, 224, 0.76);
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.bet-circle {
+  width: 126px;
+  height: 126px;
+  display: grid;
+  place-items: center;
+  margin-top: -8px;
+  border: 3px solid rgba(225, 184, 90, 0.78);
+  border-radius: 50%;
+  background: rgba(7, 71, 53, 0.44);
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.3);
+}
+
+.bet-circle span {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border: 6px dashed var(--cream);
+  border-radius: 50%;
+  background: var(--gold);
+  color: #312312;
+  font-weight: 900;
+}
+
+.side-panel {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.panel-section {
+  padding: 18px;
+  border: 1px solid rgba(246, 239, 224, 0.15);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(34, 37, 44, 0.97), rgba(23, 25, 30, 0.97));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+}
+
+.status-section h2 {
+  margin-bottom: 8px;
+  color: var(--gold);
+  font-size: 1.6rem;
+}
+
+.status-section p:last-child,
+.probability-panel p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.chips {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.chip {
+  aspect-ratio: 1;
+  min-height: 0;
+  border: 6px dashed rgba(246, 239, 224, 0.92);
+  border-radius: 50%;
+  background: #b73943;
+  color: var(--cream);
+  font-size: 0.9rem;
+}
+
+.chip:nth-child(2) {
+  background: #2d6fbd;
+}
+
+.chip:nth-child(3) {
+  background: #1e855d;
+}
+
+.chip:nth-child(4) {
+  background: #2c2e35;
+}
+
+.chip.is-selected {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.primary-action {
+  grid-column: 1 / -1;
+  background: linear-gradient(180deg, #e8c36a, #bc8232);
+  color: #26190c;
+  border-color: rgba(255, 241, 190, 0.75);
+}
+
+.probability-meter {
+  height: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(246, 239, 224, 0.18);
+  border-radius: 999px;
+  background: rgba(246, 239, 224, 0.1);
+}
+
+#probability-fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--bad), var(--warn), var(--good));
+  transition: width 220ms ease;
+}
+
+.probability-values {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.probability-values span {
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(246, 239, 224, 0.08);
+  color: var(--muted);
+}
+
+.probability-values strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--cream);
+  font-size: 1.2rem;
+}
+
+.rules ul {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.rules li + li {
+  margin-top: 8px;
+}
+
+@media (max-width: 980px) {
+  .table {
+    grid-template-columns: 1fr;
+  }
+
+  .side-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 660px) {
+  .app-shell {
+    padding: 12px;
+  }
+
+  .table-felt {
+    min-height: 650px;
+    border-width: 8px;
+    border-radius: 0 0 210px 210px / 0 0 110px 110px;
+  }
+
+  .table-header {
+    padding: 72px 18px 12px;
+    flex-direction: column;
+  }
+
+  .bankroll {
+    width: 100%;
+    text-align: left;
+  }
+
+  .playing-card {
+    width: 64px;
+    height: 94px;
+    padding: 7px;
+  }
+
+  .suit-center {
+    font-size: 2rem;
+  }
+
+  .side-panel,
+  .chips,
+  .probability-values {
+    grid-template-columns: 1fr;
+  }
+
+  .chips {
+    grid-template-columns: repeat(4, minmax(54px, 1fr));
+  }
+}
