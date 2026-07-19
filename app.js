@@ -433,47 +433,7 @@ function dealerDistributionFromUpcard(upcardKey, counts) {
   return distribution;
 }
 
-function standWinProbability(playerKeys, counts, dealerUpcardKey) {
-  const playerTotal = probabilityHandValue(playerKeys);
-  if (playerTotal > 21) return 0;
-
-  const dealerDistribution = dealerDistributionFromUpcard(dealerUpcardKey, counts);
-  return Object.entries(dealerDistribution).reduce((sum, [outcome, chance]) => {
-    if (outcome === "bust") return sum + chance;
-    return playerTotal > Number(outcome) ? sum + chance : sum;
-  }, 0);
-}
-
-function bestHitProbability(playerKeys, counts, dealerUpcardKey, memo) {
-  if (probabilityHandValue(playerKeys) > 21) return 0;
-
-  const memoKey = `${playerKeys.join("-")}|${countsKey(counts)}|${dealerUpcardKey}`;
-  if (memo.has(memoKey)) return memo.get(memoKey);
-
-  const remaining = totalCount(counts);
-  if (remaining === 0) return standWinProbability(playerKeys, counts, dealerUpcardKey);
-
-  let probability = 0;
-
-  countKeys.forEach((key) => {
-    if (counts[key] <= 0) return;
-    const chance = counts[key] / remaining;
-    const nextKeys = [...playerKeys, key];
-    const nextCounts = subtractCount(counts, key);
-
-    if (probabilityHandValue(nextKeys) > 21) {
-      probability += 0;
-      return;
-    }
-
-    const standAfterHit = standWinProbability(nextKeys, nextCounts, dealerUpcardKey);
-    const hitAgain = bestHitProbability(nextKeys, nextCounts, dealerUpcardKey, memo);
-    probability += chance * Math.max(standAfterHit, hitAgain);
-  });
-
-  memo.set(memoKey, probability);
-  return probability;
-}
+const outcomeEV = (outcome) => outcome.win - outcome.loss;
 
 // Full win/push/loss split for standing on a hand. EV (in bet units) is
 // win - loss, since a push returns the wager. Double compares on EV because
@@ -524,20 +484,19 @@ function doubleOutcome(playerKeys, counts, dealerUpcardKey) {
   );
 }
 
-// Best achievable EV from hitting, optimising hit-vs-stand at each future card.
-function bestHitEV(playerKeys, counts, dealerUpcardKey, memo) {
-  if (probabilityHandValue(playerKeys) > 21) return -1;
+// Best win/push/loss split from hitting, optimising hit-vs-stand at each
+// future card by expected value. Returns the full split so the panel can
+// show pushes rather than folding them into losses.
+function bestHitOutcome(playerKeys, counts, dealerUpcardKey, memo) {
+  if (probabilityHandValue(playerKeys) > 21) return { win: 0, push: 0, loss: 1 };
 
   const memoKey = `${playerKeys.join("-")}|${countsKey(counts)}|${dealerUpcardKey}`;
   if (memo.has(memoKey)) return memo.get(memoKey);
 
   const remaining = totalCount(counts);
-  if (remaining === 0) {
-    const outcome = standOutcome(playerKeys, counts, dealerUpcardKey);
-    return outcome.win - outcome.loss;
-  }
+  if (remaining === 0) return standOutcome(playerKeys, counts, dealerUpcardKey);
 
-  let expectedValue = 0;
+  const outcome = { win: 0, push: 0, loss: 0 };
 
   countKeys.forEach((key) => {
     if (counts[key] <= 0) return;
@@ -545,19 +504,22 @@ function bestHitEV(playerKeys, counts, dealerUpcardKey, memo) {
     const nextKeys = [...playerKeys, key];
 
     if (probabilityHandValue(nextKeys) > 21) {
-      expectedValue += chance * -1;
+      outcome.loss += chance;
       return;
     }
 
     const nextCounts = subtractCount(counts, key);
     const standAfterHit = standOutcome(nextKeys, nextCounts, dealerUpcardKey);
-    const standEV = standAfterHit.win - standAfterHit.loss;
-    const hitAgainEV = bestHitEV(nextKeys, nextCounts, dealerUpcardKey, memo);
-    expectedValue += chance * Math.max(standEV, hitAgainEV);
+    const hitAgain = bestHitOutcome(nextKeys, nextCounts, dealerUpcardKey, memo);
+    // Choose whichever branch has the higher EV, then carry its full split.
+    const chosen = outcomeEV(hitAgain) > outcomeEV(standAfterHit) ? hitAgain : standAfterHit;
+    outcome.win += chance * chosen.win;
+    outcome.push += chance * chosen.push;
+    outcome.loss += chance * chosen.loss;
   });
 
-  memo.set(memoKey, expectedValue);
-  return expectedValue;
+  memo.set(memoKey, outcome);
+  return outcome;
 }
 
 function oddsForCurrentHand() {
@@ -566,8 +528,6 @@ function oddsForCurrentHand() {
   const counts = visibleCounts();
   const playerKeys = state.playerHand.map((card) => card.countValue);
   const dealerUpcardKey = state.dealerHand[0].countValue;
-  const standProbability = standWinProbability(playerKeys, counts, dealerUpcardKey);
-  const hitProbability = bestHitProbability(playerKeys, counts, dealerUpcardKey, new Map());
   const remaining = totalCount(counts);
   const bustCards = countKeys.reduce((sum, key) => {
     if (probabilityHandValue([...playerKeys, key]) > 21) {
@@ -576,24 +536,27 @@ function oddsForCurrentHand() {
     return sum;
   }, 0);
 
-  // EV comparison (bet units) so the doubled stake is weighed fairly.
-  const standEV = standProbability - standOutcome(playerKeys, counts, dealerUpcardKey).loss;
-  const hitEV = bestHitEV(playerKeys, counts, dealerUpcardKey, new Map());
+  // Every action carries a full win/push/loss split; EV (win - loss, in bet
+  // units) ranks them so pushes stay neutral and the doubled stake is fair.
+  const standResult = standOutcome(playerKeys, counts, dealerUpcardKey);
+  const hitResult = bestHitOutcome(playerKeys, counts, dealerUpcardKey, new Map());
   const doubleAvailable = playerKeys.length === 2 && state.bankroll >= state.bet * 2;
   const doubleResult = doubleAvailable ? doubleOutcome(playerKeys, counts, dealerUpcardKey) : null;
-  const doubleEV = doubleResult ? 2 * (doubleResult.win - doubleResult.loss) : -Infinity;
 
   const options = [
-    { action: "Stand", ev: standEV },
-    { action: "Hit", ev: hitEV },
-    { action: "Double", ev: doubleEV }
+    { action: "Stand", ev: outcomeEV(standResult) },
+    { action: "Hit", ev: outcomeEV(hitResult) },
+    { action: "Double", ev: doubleResult ? 2 * outcomeEV(doubleResult) : -Infinity }
   ];
   const recommendation = options.reduce((best, option) => (option.ev > best.ev ? option : best)).action;
+  const resultByAction = { Stand: standResult, Hit: hitResult, Double: doubleResult };
+  const recommendedWin = resultByAction[recommendation].win;
 
   return {
-    standProbability,
-    hitProbability,
-    doubleProbability: doubleResult ? doubleResult.win : null,
+    standResult,
+    hitResult,
+    doubleResult,
+    recommendedWin,
     doubleAvailable,
     remaining,
     bustChance: remaining > 0 ? bustCards / remaining : 0,
@@ -605,6 +568,13 @@ function oddsForCurrentHand() {
 
 function formatPercent(value) {
   return `${Math.round(value * 100)}%`;
+}
+
+// Win% as the headline, with a smaller push line only when a push is possible.
+function outcomeMarkup(outcome) {
+  const push = Math.round(outcome.push * 100);
+  const win = `${Math.round(outcome.win * 100)}%`;
+  return push > 0 ? `${win}<small>${push}% push</small>` : win;
 }
 
 function updateProbabilityPanel() {
@@ -623,18 +593,18 @@ function updateProbabilityPanel() {
   const odds = oddsForCurrentHand();
   if (!odds) return;
 
-  const bestProbability = Math.max(odds.standProbability, odds.hitProbability);
-  elements.probabilityFill.style.width = `${Math.round(bestProbability * 100)}%`;
+  elements.probabilityFill.style.width = `${Math.round(odds.recommendedWin * 100)}%`;
   elements.recommendedAction.textContent = `Best play: ${odds.recommendation}`;
-  elements.standOdds.textContent = formatPercent(odds.standProbability);
-  elements.hitOdds.textContent = formatPercent(odds.hitProbability);
-  elements.doubleOdds.textContent = odds.doubleAvailable ? formatPercent(odds.doubleProbability) : "--";
+  elements.standOdds.innerHTML = outcomeMarkup(odds.standResult);
+  elements.hitOdds.innerHTML = outcomeMarkup(odds.hitResult);
+  elements.doubleOdds.innerHTML = odds.doubleAvailable ? outcomeMarkup(odds.doubleResult) : "--";
   const doubleNote = odds.doubleAvailable
     ? ` Double is compared on expected value since it stakes twice the bet for one card.`
     : "";
   elements.probabilityReason.textContent =
     `${odds.recommendation} is favored because your ${odds.playerTotal} faces a dealer ${odds.dealerUpcard}. ` +
-    `The model removes visible cards from the deck, estimates dealer outcomes, and counts a hit bust risk of ${formatPercent(odds.bustChance)}.` +
+    `Percentages show win chance (pushes shown separately, since a tie returns your bet). ` +
+    `The model removes visible cards, estimates dealer outcomes, and counts a hit bust risk of ${formatPercent(odds.bustChance)}.` +
     doubleNote;
 }
 
